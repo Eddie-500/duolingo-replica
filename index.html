@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SafeKids – Aprende a estar seguro</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%2358CC02%22/><circle cx=%2237%22 cy=%2242%22 r=%225%22 fill=%22white%22/><circle cx=%2263%22 cy=%2242%22 r=%225%22 fill=%22white%22/><path d=%22M25 62 q25 18 50 0%22 stroke=%22white%22 stroke-width=%224%22 fill=%22none%22/></svg>" />
+</head>
+<body>
+  <!-- Header/HUD -->
+  <header class="hud">
+    <div class="brand">
+      <div class="mascot" aria-hidden="true">🙂</div>
+      <span class="brand-name">SafeKids</span>
+    </div>
+    <div class="hud-right">
+      <div class="xp" title="Puntos">⭐ <span id="xp">0</span></div>
+      <div class="hearts" title="Intentos">❤️ <span id="hearts">5</span></div>
+    </div>
+  </header>
+
+  <!-- Pantalla START -->
+  <main id="screen-start" class="screen active">
+    <h1 class="title">¡Aprendamos a estar <span class="dl-green">seguros</span>!</h1>
+    <p class="subtitle">Juega y aprende qué hacer en situaciones del mundo real.</p>
+    <button class="btn btn-primary big" id="btnStart">Start</button>
+  </main>
+
+  <!-- Mapa de Lecciones -->
+  <main id="screen-map" class="screen">
+    <h2 class="title">Elige una lección</h2>
+    <p class="subtitle">Cada lección tiene 7 preguntas.</p>
+    <section class="lesson-grid" id="lessonGrid">
+      <!-- se llena por JS -->
+    </section>
+    <button class="btn ghost" id="backToStart">← Volver</button>
+  </main>
+
+  <!-- Quiz -->
+  <main id="screen-quiz" class="screen">
+    <div class="quiz-top">
+      <button class="btn ghost" id="backToMap">← Lecciones</button>
+      <div class="progress-wrap" aria-label="Progreso">
+        <div id="progressBar" class="progress"></div>
+      </div>
+      <div id="lessonBadge" class="badge">L1</div>
+    </div>
+
+    <div id="prompt" class="prompt">Pregunta…</div>
+
+    <div id="choices" class="choices">
+      <!-- opciones / banco de palabras -->
+    </div>
+
+    <div id="feedback" class="feedback" role="alert" aria-live="polite"></div>
+
+    <div class="quiz-bottom">
+      <button class="btn btn-primary" id="btnCheck" disabled>Comprobar</button>
+      <button class="btn btn-secondary" id="btnContinue" disabled>Continuar</button>
+      <button class="btn ghost" id="btnResetSentence" hidden>↺ Reset</button>
+    </div>
+  </main>
+
+  <!-- Final -->
+  <main id="screen-finish" class="screen">
+    <h2 class="title">¡Excelente! 🎉</h2>
+    <p class="subtitle">Terminaste la lección. Sumas <b id="earnedXp">0</b> XP.</p>
+    <div class="confetti" aria-hidden="true"></div>
+    <button class="btn btn-primary" id="btnFinishToMap">Volver al mapa</button>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
