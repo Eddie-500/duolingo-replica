@@ -1,12 +1,12 @@
 /* ---------------------------------------
-   Helpers para crear preguntas
+   Constructores de preguntas
 ----------------------------------------*/
 function qMC(prompt, options, correctIndex, edu){return({type:"mc",prompt,options,correctIndex,edu})}
 function qWORD(prompt, options, correctIndex, edu){return({type:"word",prompt,options,correctIndex,edu})}
 function qSentence(answer, words){return({type:"sentence",prompt:"Ordena la oración:", answer, words})}
 
 /* ---------------------------------------
-   Banco de lecciones (5 lecciones, 7 items)
+   Banco de lecciones (5 lecciones, 7 ítems c/u)
 ----------------------------------------*/
 const LESSONS = [
   {
@@ -119,16 +119,16 @@ const LESSONS = [
 ];
 
 /* ---------------------------------------
-   Estado y refs de UI
+   Estado y refs
 ----------------------------------------*/
-let xp=0;
-let hearts=5;                 // Se resetea al iniciar cada lección
-let currentLesson=null;
-let idx=0;
-let selectedIndex=null;
-let sentencePicked=[];
-let pendingAdvance=null;      // para limpiar el auto-avance si te vas al mapa
-const AUTO_MS = 900;
+let xp = 0;
+let hearts = 5;              // se resetea al empezar lección
+let currentLesson = null;
+let idx = 0;
+let selectedIndex = null;
+let sentencePicked = [];
+let pendingAdvance = null;
+const AUTO_MS = 900;         // auto-avance en acierto
 
 // Pantallas
 const screens = {
@@ -139,47 +139,50 @@ const screens = {
 };
 
 // HUD
-const xpEl       = document.getElementById('xp');
-const heartsEl   = document.getElementById('hearts');
+const xpEl     = document.getElementById('xp');
+const heartsEl = document.getElementById('hearts');
 
-// Controles
-const grid             = document.getElementById('lessonGrid');
-const btnStart         = document.getElementById('btnStart');
-const backToStart      = document.getElementById('backToStart');
-const backToMap        = document.getElementById('backToMap');
-const btnCheck         = document.getElementById('btnCheck');
-const btnContinue      = document.getElementById('btnContinue');
-const btnResetSentence = document.getElementById('btnResetSentence');
-
-// Quiz UI
-const promptEl    = document.getElementById('prompt');
-const choicesEl   = document.getElementById('choices');
-const feedbackEl  = document.getElementById('feedback');
-const progressBar = document.getElementById('progressBar');
-const lessonBadge = document.getElementById('lessonBadge');
-const earnedXpEl  = document.getElementById('earnedXp');
+// Map / Quiz / Finish refs
+const lessonGrid        = document.getElementById('lessonGrid');
+const btnStart          = document.getElementById('btnStart');
+const backToStart       = document.getElementById('backToStart');
+const backToMap         = document.getElementById('backToMap');        // botón del quiz
+const btnFinishToMap    = document.getElementById('btnFinishToMap');   // botón de la pantalla final
+const promptEl          = document.getElementById('prompt');
+const choicesEl         = document.getElementById('choices');
+const feedbackEl        = document.getElementById('feedback');
+const progressBar       = document.getElementById('progressBar');
+const lessonBadge       = document.getElementById('lessonBadge');
+const btnCheck          = document.getElementById('btnCheck');
+const btnContinue       = document.getElementById('btnContinue');
+const btnResetSentence  = document.getElementById('btnResetSentence');
+const earnedXpEl        = document.getElementById('earnedXp');
 
 /* ---------------------------------------
-   Navegación y helpers
+   Navegación
 ----------------------------------------*/
 function show(name){
-  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
 }
 function clearAdvance(){
-  if(pendingAdvance){ clearTimeout(pendingAdvance); pendingAdvance=null; }
+  if (pendingAdvance){ clearTimeout(pendingAdvance); pendingAdvance=null; }
 }
-function normalize(s){ return (s||"").toLowerCase().trim().replace(/\s+/g,' ') }
+function progress(k){
+  const total = currentLesson.items.length;
+  progressBar.style.width = `${(k/total)*100}%`;
+}
+function normalize(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,' ') }
 function feedback(msg, ok){
   feedbackEl.textContent = msg||'';
-  feedbackEl.className   = 'feedback ' + (msg? (ok?'ok':'bad') : '');
+  feedbackEl.className = 'feedback ' + (msg ? (ok ? 'ok' : 'bad') : '');
 }
 
 /* ---------------------------------------
-   Construir mapa de lecciones
+   Mapa de lecciones
 ----------------------------------------*/
 function buildMap(){
-  grid.innerHTML = '';
+  lessonGrid.innerHTML = '';
   LESSONS.forEach(lesson=>{
     const card = document.createElement('article');
     card.className = 'lesson-card';
@@ -188,13 +191,13 @@ function buildMap(){
       <h3>${lesson.title}</h3>
       <button class="btn btn-primary go">Empezar</button>
     `;
-    card.querySelector('.go').onclick = ()=>startLesson(lesson.id);
-    grid.appendChild(card);
+    card.querySelector('.go').onclick = ()=> startLesson(lesson.id);
+    lessonGrid.appendChild(card);
   });
 }
 
 /* ---------------------------------------
-   Iniciar lección / Progreso
+   Lección
 ----------------------------------------*/
 function startLesson(id){
   clearAdvance();
@@ -202,22 +205,14 @@ function startLesson(id){
   idx = 0;
   selectedIndex = null;
   sentencePicked = [];
-  hearts = 5;                        // ♥ reset por lección
-  heartsEl.textContent = hearts;     // ♥ UI inmediata
+  hearts = 5;
+  heartsEl.textContent = hearts;      // ♥ actualiza inmediato
   lessonBadge.textContent = currentLesson.badge;
   progress(0);
   show('quiz');
   renderQuestion();
 }
 
-function progress(k){
-  const total = currentLesson.items.length;
-  progressBar.style.width = `${(k/total)*100}%`;
-}
-
-/* ---------------------------------------
-   Render de preguntas
-----------------------------------------*/
 function renderQuestion(){
   clearAdvance();
   feedback('');
@@ -229,7 +224,7 @@ function renderQuestion(){
   const q = currentLesson.items[idx];
 
   // Opción múltiple / palabra
-  if(q.type==='mc' || q.type==='word'){
+  if (q.type==='mc' || q.type==='word'){
     promptEl.textContent = q.prompt;
     q.options.forEach((t,i)=>{
       const b = document.createElement('button');
@@ -247,8 +242,9 @@ function renderQuestion(){
   }
 
   // Construir oración
-  if(q.type==='sentence'){
+  if (q.type==='sentence'){
     promptEl.textContent = q.prompt;
+
     const board = document.createElement('div');
     board.className = 'sentence-board';
     board.id = 'board';
@@ -264,13 +260,13 @@ function renderQuestion(){
       chip.className = 'chip';
       chip.textContent = w;
       chip.onclick = ()=>{
-        if(chip.dataset.used==='1') return;
+        if (chip.dataset.used==='1') return;
         chip.dataset.used='1';
         chip.style.opacity=.5;
 
         const picked = document.createElement('button');
-        picked.className = 'chip';
-        picked.textContent = w;
+        picked.className='chip';
+        picked.textContent=w;
         picked.onclick = ()=>{
           chip.dataset.used='0'; chip.style.opacity=1;
           picked.remove();
@@ -285,12 +281,12 @@ function renderQuestion(){
     });
 
     btnResetSentence.hidden = false;
-    btnResetSentence.onclick = ()=>renderQuestion(); // resetea la oración actual
+    btnResetSentence.onclick = ()=> renderQuestion(); // reinicia la oración actual
   }
 }
 
 /* ---------------------------------------
-   Corrección y avance
+   Corrección
 ----------------------------------------*/
 function markChoices(correctIdx, selectedIdx){
   document.querySelectorAll('.choice').forEach((c,i)=>{
@@ -304,55 +300,47 @@ function checkAnswer(){
   const q = currentLesson.items[idx];
 
   // MC / WORD
-  if(q.type==='mc' || q.type==='word'){
+  if (q.type==='mc' || q.type==='word'){
     const correct = selectedIndex===q.correctIndex;
     markChoices(q.correctIndex, selectedIndex);
 
-    if(correct){
-      xp += 10;
-      xpEl.textContent = xp;
+    if (correct){
+      xp += 10; xpEl.textContent = xp;
       feedback('¡Bien hecho!', true);
       btnCheck.disabled = true;
-      btnContinue.disabled = true;     // auto-avanza
+      btnContinue.disabled = true;           // auto-avanza
       pendingAdvance = setTimeout(nextQuestion, AUTO_MS);
     }else{
-      hearts--;                         // ♥ baja de inmediato
-      heartsEl.textContent = hearts;    // ♥ UI inmediata
+      hearts--; heartsEl.textContent = hearts;   // ♥ al instante
       feedback(q.edu || 'Inténtalo otra vez.', false);
-      btnContinue.disabled = false;     // NO avanza solo
-      btnCheck.disabled = true;
+      btnContinue.disabled = false; btnCheck.disabled = true;
 
-      if(hearts<=0){
-        // “derrota” suave: vuelve al mapa
-        feedback('Sin intentos. Volvemos al mapa.', false);
-        setTimeout(()=>{ show('map'); }, 900);
+      if (hearts<=0){
+        feedback('Sin intentos. Volvemos al mapa…', false);
+        setTimeout(()=> show('map'), 900);
       }
     }
     return;
   }
 
   // SENTENCE
-  if(q.type==='sentence'){
-    const built   = sentencePicked.join(' ');
+  if (q.type==='sentence'){
+    const built = sentencePicked.join(' ');
     const correct = normalize(built)===normalize(q.answer);
 
-    if(correct){
-      xp += 12;
-      xpEl.textContent = xp;
+    if (correct){
+      xp += 12; xpEl.textContent = xp;
       feedback('¡Oración correcta!', true);
-      btnCheck.disabled = true;
-      btnContinue.disabled = true;
+      btnCheck.disabled = true; btnContinue.disabled = true;
       pendingAdvance = setTimeout(nextQuestion, AUTO_MS);
     }else{
-      hearts--;
-      heartsEl.textContent = hearts;   // ♥ inmediata
+      hearts--; heartsEl.textContent = hearts;
       feedback('Revisa el orden. 💡 Correcto: "'+q.answer+'"', false);
-      btnContinue.disabled = false;
-      btnCheck.disabled = true;
+      btnContinue.disabled = false; btnCheck.disabled = true;
 
-      if(hearts<=0){
-        feedback('Sin intentos. Volvemos al mapa.', false);
-        setTimeout(()=>{ show('map'); }, 900);
+      if (hearts<=0){
+        feedback('Sin intentos. Volvemos al mapa…', false);
+        setTimeout(()=> show('map'), 900);
       }
     }
   }
@@ -363,30 +351,38 @@ function nextQuestion(){
   idx++;
   const total = currentLesson.items.length;
   progress(idx);
-  if(idx>=total){
-    earnedXpEl.textContent = 10; // referencia visual
+  if (idx>=total){
+    earnedXpEl.textContent = 10; // visual, el XP real ya se sumó
     show('finish');
   }else{
-    selectedIndex=null;
-    sentencePicked=[];
+    selectedIndex = null;
+    sentencePicked = [];
     renderQuestion();
   }
 }
 
 /* ---------------------------------------
-   Wire-up
+   Listeners
 ----------------------------------------*/
-btnStart.onclick    = ()=>{ show('map'); };
-backToStart.onclick = ()=>{ show('start'); };
-backToMap.onclick   = (e)=>{
+btnStart.onclick      = ()=> show('map');
+backToStart.onclick   = ()=> show('start');
+
+backToMap.onclick = (e)=>{         // botón "← Lecciones" en el QUIZ
   e.preventDefault();
-  clearAdvance();           // cancela auto-avance si estaba corriendo
+  clearAdvance();
   show('map');
 };
 
-btnCheck.onclick    = checkAnswer;
-btnContinue.onclick = nextQuestion;
+btnFinishToMap.onclick = ()=>{     // botón "Volver al mapa" de la pantalla FINAL
+  clearAdvance();
+  show('map');
+};
 
-// Arranque
+btnCheck.onclick      = checkAnswer;
+btnContinue.onclick   = nextQuestion;
+
+/* ---------------------------------------
+   Boot
+----------------------------------------*/
 buildMap();
 show('start');
